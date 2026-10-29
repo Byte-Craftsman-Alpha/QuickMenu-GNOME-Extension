@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.my-menu" path="/org/gnome/shell/extensions/my-menu/">
+
+    <key name="menu-title" type="s">
+      <default>'Options'</default>
+      <summary>Menu Title</summary>
+      <description>The title label shown on the top panel button.</description>
+    </key>
+
+    <key name="panel-box" type="s">
+      <default>'left'</default>
+      <summary>Panel Section</summary>
+      <description>Panel section: left, center, or right.</description>
+    </key>
+
+    <key name="panel-position" type="i">
+      <default>1</default>
+      <summary>Panel Position Index</summary>
+      <description>Position index within the panel section.</description>
+    </key>
+
+    <key name="stick-to-zorin-menu" type="b">
+      <default>true</default>
+      <summary>Lock Next to Start Menu</summary>
+      <description>Keep Options fixed immediately next to the primary start/Zorin menu icon.</description>
+    </key>
+
+    <key name="menu-items" type="s">
+      <default>'[{"id":"terminal","name":"Terminal","icon":"terminal-symbolic","type":"command","target":"x-terminal-emulator","enabled":true},{"id":"downloads","name":"Downloads","icon":"folder-downloads-symbolic","type":"special-dir","target":"DOWNLOAD","enabled":true},{"id":"projects","name":"Projects","icon":"folder-code-symbolic","type":"path","target":"/mnt/2C0D-2B46/Projects","enabled":true},{"id":"google","name":"Google","icon":"web-browser-symbolic","type":"url","target":"https://www.google.com","enabled":true},{"id":"whatsapp","name":"WhatsApp","icon":"chat-symbolic","type":"url","target":"https://web.whatsapp.com","enabled":true}]'</default>
+      <summary>Custom Menu Items JSON</summary>
+      <description>JSON array defining the custom menu items, their icons, types, and target actions.</description>
+    </key>
+
+    <key name="enable-adb" type="b">
+      <default>true</default>
+      <summary>Enable ADB Devices Monitor</summary>
+      <description>Automatically detect connected Android ADB devices and create dedicated panel menus.</description>
+    </key>
+
+    <key name="scrcpy-max-size" type="i">
+      <default>1280</default>
+      <summary>Scrcpy Max Resolution</summary>
+      <description>Maximum dimension in pixels for app windows (1024, 1280, 1920, or 0 for native).</description>
+    </key>
+
+    <key name="scrcpy-bitrate" type="s">
+      <default>'4M'</default>
+      <summary>Scrcpy Video Bitrate</summary>
+      <description>Bitrate allocated to each scrcpy stream (e.g. 2M, 4M, 8M).</description>
+    </key>
+
+    <key name="scrcpy-stay-awake" type="b">
+      <default>true</default>
+      <summary>Keep Device Awake</summary>
+      <description>Prevent Android from putting virtual displays to sleep during mirroring.</description>
+    </key>
+
+    <key name="scrcpy-no-audio" type="b">
+      <default>true</default>
+      <summary>Disable Audio on App Windows</summary>
+      <description>Prevents audio stream deadlock when running multiple app windows concurrently.</description>
+    </key>
+
+    <key name="scrcpy-extra-args" type="s">
+      <default>''</default>
+      <summary>Extra scrcpy Arguments</summary>
+      <description>Optional additional arguments passed to scrcpy.</description>
+    </key>
+
+  </schema>
+</schemalist>
