@@ -1,5 +1,6 @@
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
+import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
@@ -118,6 +119,47 @@ export default class MyMenuPreferences extends ExtensionPreferences {
             title: _('Android and Scrcpy'),
             icon_name: 'phone-symbolic',
         });
+
+        // --- System Prerequisites Check ---
+        const depCheckGroup = new Adw.PreferencesGroup({
+            title: _('System Prerequisites'),
+        });
+
+        const adbPath = GLib.find_program_in_path('adb') || (GLib.file_test('/usr/local/bin/adb', GLib.FileTest.IS_EXECUTABLE) ? '/usr/local/bin/adb' : null);
+        const scrcpyPath = GLib.find_program_in_path('scrcpy') || (GLib.file_test('/usr/local/bin/scrcpy', GLib.FileTest.IS_EXECUTABLE) ? '/usr/local/bin/scrcpy' : null);
+        const allDepsFound = adbPath && scrcpyPath;
+
+        const prereqRow = new Adw.ActionRow({
+            title: allDepsFound ? _('Dependencies Detected') : _('Missing System Dependencies'),
+            subtitle: allDepsFound
+                ? `adb: ${adbPath}\nscrcpy: ${scrcpyPath}`
+                : _('Run in terminal: sudo apt install adb scrcpy'),
+        });
+
+        const prereqIcon = new Gtk.Image({
+            icon_name: allDepsFound ? 'emblem-ok-symbolic' : 'dialog-warning-symbolic',
+            pixel_size: 24,
+        });
+        prereqRow.add_prefix(prereqIcon);
+
+        if (!allDepsFound) {
+            const copyBtn = new Gtk.Button({
+                label: _('Copy Install Command'),
+                icon_name: 'edit-copy-symbolic',
+                valign: Gtk.Align.CENTER,
+            });
+            copyBtn.connect('clicked', () => {
+                const clipboard = Gdk.Display.get_default()?.get_clipboard();
+                if (clipboard) {
+                    clipboard.set('sudo apt install adb scrcpy');
+                    copyBtn.set_label(_('Copied!'));
+                }
+            });
+            prereqRow.add_suffix(copyBtn);
+        }
+
+        depCheckGroup.add(prereqRow);
+        page2.add(depCheckGroup);
 
         const adbGroup = new Adw.PreferencesGroup({
             title: _('ADB Device Integration'),

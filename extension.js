@@ -326,14 +326,14 @@ export default class MyMenuExtension extends Extension {
 
     notify(message) {
         if (this._enabled)
-            Main.notify('My Menu', message);
+            Main.notify('Quick Menu', message);
     }
 
     openUrl(url) {
         try {
             Gio.AppInfo.launch_default_for_uri(url, null);
         } catch (e) {
-            console.error(`My Menu: URL error: ${e}`);
+            console.error(`Quick Menu: URL error: ${e}`);
             this.notify('Could not open URL.');
         }
     }
@@ -343,7 +343,7 @@ export default class MyMenuExtension extends Extension {
             const file = Gio.File.new_for_path(path);
             Gio.AppInfo.launch_default_for_uri(file.get_uri(), null);
         } catch (e) {
-            console.error(`My Menu: Could not open ${path}: ${e}`);
+            console.error(`Quick Menu: Could not open ${path}: ${e}`);
             this.notify(`Could not open: ${path}`);
         }
     }
@@ -352,18 +352,29 @@ export default class MyMenuExtension extends Extension {
         try {
             Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
         } catch (e) {
-            console.error(`My Menu: Command failed: ${e}`);
+            console.error(`Quick Menu: Command failed: ${e}`);
             this.notify(`Could not run ${argv[0]}.`);
         }
     }
 
-    findExecutable(name, fallback) {
-        return GLib.find_program_in_path(name) || fallback;
+    findExecutable(name, fallback = null) {
+        const found = GLib.find_program_in_path(name);
+        if (found)
+            return found;
+        if (fallback && GLib.file_test(fallback, GLib.FileTest.IS_EXECUTABLE))
+            return fallback;
+        return null;
     }
 
     // ---------------- ADB DEVICE MONITORING ----------------
 
     _startDeviceMonitor() {
+        const adb = this.findExecutable('adb', '/usr/local/bin/adb');
+        if (!adb) {
+            console.log('Quick Menu: adb binary not installed. Android device monitor is disabled.');
+            return;
+        }
+
         if (this._pollTimeoutId) {
             GLib.source_remove(this._pollTimeoutId);
             this._pollTimeoutId = null;
@@ -388,10 +399,12 @@ export default class MyMenuExtension extends Extension {
         if (!this._enabled || this._pollingActive)
             return;
 
+        const adb = this.findExecutable('adb', '/usr/local/bin/adb');
+        if (!adb)
+            return;
+
         this._pollingActive = true;
         this._ensurePositions();
-
-        const adb = this.findExecutable('adb', '/usr/local/bin/adb');
 
         let proc;
         try {
@@ -602,6 +615,11 @@ export default class MyMenuExtension extends Extension {
 
     launchScrcpy(serial, mirrorless = false) {
         const scrcpy = this.findExecutable('scrcpy', '/usr/local/bin/scrcpy');
+        if (!scrcpy) {
+            this.notify('scrcpy is not installed. Run: sudo apt install scrcpy');
+            return;
+        }
+
         const argv = [scrcpy, '--serial', serial];
 
         if (mirrorless)
@@ -616,22 +634,27 @@ export default class MyMenuExtension extends Extension {
                         argv.push(...parsed);
                     }
                 } catch (e) {
-                    console.error(`My Menu: Error parsing scrcpy-extra-args: ${e}`);
+                    console.error(`Quick Menu: Error parsing scrcpy-extra-args: ${e}`);
                 }
             }
         }
 
         try {
             Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
-            console.log(`My Menu: Started scrcpy for ${serial} (mirrorless: ${mirrorless})`);
+            console.log(`Quick Menu: Started scrcpy for ${serial} (mirrorless: ${mirrorless})`);
         } catch (e) {
-            console.error(`My Menu: scrcpy launch failed: ${e}`);
+            console.error(`Quick Menu: scrcpy launch failed: ${e}`);
             this.notify('Could not start scrcpy.');
         }
     }
 
     launchAppWindow(serial, model, appName, pkg) {
         const scrcpy = this.findExecutable('scrcpy', '/usr/local/bin/scrcpy');
+        if (!scrcpy) {
+            this.notify('scrcpy is not installed. Run: sudo apt install scrcpy');
+            return;
+        }
+
         const argv = [
             scrcpy,
             '--serial', serial,
@@ -664,7 +687,7 @@ export default class MyMenuExtension extends Extension {
                         argv.push(...parsed);
                     }
                 } catch (e) {
-                    console.error(`My Menu: Error parsing scrcpy-extra-args: ${e}`);
+                    console.error(`Quick Menu: Error parsing scrcpy-extra-args: ${e}`);
                 }
             }
         } else {
@@ -679,9 +702,9 @@ export default class MyMenuExtension extends Extension {
 
         try {
             Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
-            console.log(`My Menu: Started app ${pkg} for ${serial} on separate window`);
+            console.log(`Quick Menu: Started app ${pkg} for ${serial} on separate window`);
         } catch (e) {
-            console.error(`My Menu: Failed to launch app ${pkg}: ${e}`);
+            console.error(`Quick Menu: Failed to launch app ${pkg}: ${e}`);
             this.notify(`Could not start ${appName}.`);
         }
     }
@@ -689,6 +712,10 @@ export default class MyMenuExtension extends Extension {
     openAdbShell(serial, model) {
         const terminal = this.findExecutable('x-terminal-emulator', 'gnome-terminal');
         const adb = this.findExecutable('adb', '/usr/local/bin/adb');
+        if (!adb) {
+            this.notify('adb is not installed. Run: sudo apt install adb');
+            return;
+        }
 
         try {
             Gio.Subprocess.new(
@@ -696,7 +723,7 @@ export default class MyMenuExtension extends Extension {
                 Gio.SubprocessFlags.NONE
             );
         } catch (e) {
-            console.error(`My Menu: Failed to open ADB shell: ${e}`);
+            console.error(`Quick Menu: Failed to open ADB shell: ${e}`);
             this.notify('Could not open terminal emulator.');
         }
     }
@@ -704,6 +731,10 @@ export default class MyMenuExtension extends Extension {
     openStorageShell(serial, model) {
         const terminal = this.findExecutable('x-terminal-emulator', 'gnome-terminal');
         const adb = this.findExecutable('adb', '/usr/local/bin/adb');
+        if (!adb) {
+            this.notify('adb is not installed. Run: sudo apt install adb');
+            return;
+        }
 
         try {
             Gio.Subprocess.new(
@@ -711,13 +742,17 @@ export default class MyMenuExtension extends Extension {
                 Gio.SubprocessFlags.NONE
             );
         } catch (e) {
-            console.error(`My Menu: Failed to open storage shell: ${e}`);
+            console.error(`Quick Menu: Failed to open storage shell: ${e}`);
             this.notify('Could not open terminal emulator.');
         }
     }
 
     takeScreenshot(serial, model) {
         const adb = this.findExecutable('adb', '/usr/local/bin/adb');
+        if (!adb) {
+            this.notify('adb is not installed. Run: sudo apt install adb');
+            return;
+        }
         const picturesDir = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_PICTURES) || GLib.get_home_dir();
         const safeModel = model.replace(/\s+/g, '_');
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -735,22 +770,26 @@ export default class MyMenuExtension extends Extension {
                         this.openPath(filename);
                     }
                 } catch (e) {
-                    console.error(`My Menu: Screenshot wait error: ${e}`);
+                    console.error(`Quick Menu: Screenshot wait error: ${e}`);
                 }
             });
         } catch (e) {
-            console.error(`My Menu: Screenshot failed: ${e}`);
+            console.error(`Quick Menu: Screenshot failed: ${e}`);
             this.notify('Could not capture screenshot.');
         }
     }
 
     rebootDevice(serial) {
         const adb = this.findExecutable('adb', '/usr/local/bin/adb');
+        if (!adb) {
+            this.notify('adb is not installed. Run: sudo apt install adb');
+            return;
+        }
         try {
             Gio.Subprocess.new([adb, '-s', serial, 'reboot'], Gio.SubprocessFlags.NONE);
             this.notify('Device reboot signal sent.');
         } catch (e) {
-            console.error(`My Menu: Reboot failed: ${e}`);
+            console.error(`Quick Menu: Reboot failed: ${e}`);
             this.notify('Could not reboot device.');
         }
     }
