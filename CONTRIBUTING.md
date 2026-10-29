@@ -69,3 +69,4 @@ Feature requests and ideas are welcome! Please open an issue using the Feature R
 ## License
 
 By contributing, you agree that your contributions will be licensed under the **GNU General Public License v3.0 (GPL-3.0)**.
+

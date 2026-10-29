@@ -43,3 +43,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - Initial Release
 
 - Initial panel menu implementation for quick static shortcuts.
+

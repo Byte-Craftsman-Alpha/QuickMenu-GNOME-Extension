@@ -16,3 +16,4 @@ schemas/gschemas.compiled
 # Node / JS artifacts (if any)
 node_modules/
 npm-debug.log*
+

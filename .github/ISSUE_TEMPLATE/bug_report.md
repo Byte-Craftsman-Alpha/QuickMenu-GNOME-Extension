@@ -36,3 +36,4 @@ journalctl -b /usr/bin/gnome-shell -n 50 --no-pager
 
 **Additional context**
 Add any other context about the problem here (e.g. phone model, Android version).
+

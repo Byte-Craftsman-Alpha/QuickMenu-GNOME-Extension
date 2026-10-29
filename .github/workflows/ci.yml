@@ -47,3 +47,4 @@ jobs:
         run: |
           gnome-extensions pack --extra-source=schemas --force
           ls -lh *.shell-extension.zip
+
