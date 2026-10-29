@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Pin to start / Zorin menu lock toggle.
   - ADB Device Manager toggle.
   - Scrcpy streaming controls (Max resolution selector, bitrate selector, stay-awake switch, audio mute switch, extra CLI arguments).
+  - Built-in System Prerequisite Detection: dynamically checks if `adb` and `scrcpy` are installed with a one-click "Copy Install Command" button.
 - **Automated ADB Device Integration**:
   - Real-time detection of connected Android devices via background ADB polling.
   - Dedicated dynamic panel indicators for each connected device.
@@ -25,8 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Background discovery of installed user and system packages.
   - Multi-window independent app launching (`scrcpy --new-display`) with resolution and bitrate bounding.
   - Quick utility actions (Screenshot directly saved to Pictures, Device Reboot).
+  - Helpful desktop notifications if `adb` or `scrcpy` is missing when an action is executed.
 - **GSettings Schema**:
-  - Defined under `org.gnome.shell.extensions.quick-menu`.
+  - Defined under `org.gnome.shell.extensions.quick-menu` with dual backward-compatibility support for `org.gnome.shell.extensions.my-menu`.
   - Dynamic live reloading without requiring GNOME Shell restarts.
 - **Packaging & CI Automation**:
   - Automated GitHub Actions CI workflow for syntax checks and schema compilation.
