@@ -1,0 +1,9 @@
+{
+  "uuid": "quick-menu@byte-craftsman-alpha",
+  "name": "Quick Menu & ADB Manager",
+  "description": "Customizable top panel menu for application shortcuts, web bookmarks, and automated Android ADB device management with scrcpy mirroring & multi-window app streaming.",
+  "shell-version": ["45", "46", "47", "48"],
+  "settings-schema": "org.gnome.shell.extensions.quick-menu",
+  "url": "https://github.com/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension",
+  "version": 2
+}

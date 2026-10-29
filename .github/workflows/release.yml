@@ -1,0 +1,36 @@
+name: Release Extension Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-bin gnome-shell
+
+      - name: Compile Schemas & Pack Extension
+        run: |
+          glib-compile-schemas --strict schemas/
+          gnome-extensions pack --extra-source=schemas --force
+          ZIP_NAME=$(ls *.shell-extension.zip | head -n 1)
+          echo "ZIP_FILE=$ZIP_NAME" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_FILE }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false

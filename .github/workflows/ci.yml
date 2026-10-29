@@ -1,0 +1,49 @@
+name: CI Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-bin gnome-shell
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate JavaScript Syntax
+        run: |
+          node --input-type=module -c < extension.js
+          node --input-type=module -c < prefs.js
+
+      - name: Validate GSettings Schema
+        run: |
+          glib-compile-schemas --strict schemas/
+
+      - name: Validate metadata.json
+        run: |
+          node -e '
+            const meta = JSON.parse(require("fs").readFileSync("metadata.json", "utf8"));
+            const required = ["uuid", "name", "description", "shell-version", "settings-schema", "url"];
+            for (const key of required) {
+              if (!meta[key]) throw new Error(`Missing required metadata key: ${key}`);
+            }
+            console.log("metadata.json valid:", meta.uuid, "v" + meta.version);
+          '
+
+      - name: Pack Extension
+        run: |
+          gnome-extensions pack --extra-source=schemas --force
+          ls -lh *.shell-extension.zip
