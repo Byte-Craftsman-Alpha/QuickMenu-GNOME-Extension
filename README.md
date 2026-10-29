@@ -1,15 +1,17 @@
-<div align="center">
-
 # Quick Menu & ADB Manager
 
-**A sleek, native GNOME Shell top panel launcher & automated multi-window Android device manager.**
+<p align="center">
+  <strong>A sleek, native GNOME Shell top panel launcher &amp; automated multi-window Android device manager.</strong>
+</p>
 
-[![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-45%20|%2046%20|%2047%20|%2048-blue.svg?style=flat-square&logo=gnome)](https://extensions.gnome.org/extension/11552/quick-menu-adb-manager/)
-[![GitHub Release](https://img.shields.io/github/v/release/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension?style=flat-square&color=347d39&logo=github)](https://github.com/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension/releases/latest)
-[![CI Validation](https://img.shields.io/github/actions/workflow/status/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI)](https://github.com/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension/actions)
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-green.svg?style=flat-square)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20(Wayland%20%7C%20X11)-orange.svg?style=flat-square&logo=linux)](https://www.kernel.org)
-[![GNOME Extensions](https://img.shields.io/badge/EGO-Extension%20%2311552-purple.svg?style=flat-square&logo=gnome)](https://extensions.gnome.org/extension/11552/quick-menu-adb-manager/)
+<p align="center">
+  <a href="https://extensions.gnome.org/extension/11552/quick-menu-adb-manager/"><img src="https://img.shields.io/badge/GNOME%20Shell-45%20%7C%2046%20%7C%2047%20%7C%2048-blue.svg?style=flat-square&logo=gnome" alt="GNOME Shell"></a>
+  <a href="https://github.com/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension/releases/latest"><img src="https://img.shields.io/github/v/release/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension?style=flat-square&color=347d39&logo=github" alt="GitHub Release"></a>
+  <a href="https://github.com/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension/actions"><img src="https://img.shields.io/github/actions/workflow/status/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension/ci.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI Validation"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-green.svg?style=flat-square" alt="License"></a>
+  <a href="https://www.kernel.org"><img src="https://img.shields.io/badge/Platform-Linux%20(Wayland%20%7C%20X11)-orange.svg?style=flat-square&logo=linux" alt="Platform"></a>
+  <a href="https://extensions.gnome.org/extension/11552/quick-menu-adb-manager/"><img src="https://img.shields.io/badge/EGO-Extension%20%2311552-purple.svg?style=flat-square&logo=gnome" alt="EGO Listing"></a>
+</p>
 
 <p align="center">
   <a href="#overview">Overview</a> •
@@ -23,8 +25,6 @@
 </p>
 
 ---
-
-</div>
 
 ## Table of Contents
 
@@ -64,14 +64,14 @@ With deep `scrcpy` virtual-display integration, you can stream and interact with
 
 | Quick Launcher Dropdown | Dynamic ADB Device Menu |
 | :---: | :---: |
-| <img src="docs/assets/options-menu.png" alt="Quick Menu Dropdown" width="380"/> | <img src="docs/assets/adb-device-menu.png" alt="ADB Device Dropdown" width="380"/> |
+| ![Quick Menu Dropdown](docs/assets/options-menu.png) | ![ADB Device Dropdown](docs/assets/adb-device-menu.png) |
 | *Top panel quick menu with customizable shortcuts & system actions.* | *Auto-detected connected phone with mirroring, shell & app controls.* |
 
 <br/>
 
 | Preferences: Shortcuts & Panel | Preferences: Android & Streaming |
 | :---: | :---: |
-| <img src="docs/assets/preferences-window.png" alt="Preferences - Shortcuts" width="420"/> | <img src="docs/assets/preferences-android.png" alt="Preferences - Android & Scrcpy" width="420"/> |
+| ![Preferences - Shortcuts](docs/assets/preferences-window.png) | ![Preferences - Android & Scrcpy](docs/assets/preferences-android.png) |
 | *Add, edit, reorder shortcuts and adjust panel alignment in Libadwaita.* | *Dependency auto-detection, resolution bounding, bitrate & keep-awake.* |
 
 ---
@@ -266,6 +266,6 @@ Distributed under the **GNU General Public License v3.0 (GPL-3.0)**. See [`LICEN
 
 ---
 
-<div align="center">
+<p align="center">
   <sub>Maintained by <b><a href="https://github.com/Byte-Craftsman-Alpha">Byte-Craftsman-Alpha</a></b> • Built for the GNOME Desktop Community</sub>
-</div>
+</p>
