@@ -5,5 +5,5 @@
   "shell-version": ["45", "46", "47", "48"],
   "settings-schema": "org.gnome.shell.extensions.quick-menu",
   "url": "https://github.com/Byte-Craftsman-Alpha/QuickMenu-GNOME-Extension",
-  "version": 2
+  "version": 3
 }

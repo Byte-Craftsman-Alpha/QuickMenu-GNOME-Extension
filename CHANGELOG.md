@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0] - 2026-10-31
+
+### Fixed
+- **EGO-A-004 (Logging Compliance)**: Removed all routine runtime `console.log` calls and centralized error reporting into a single helper method to prevent Linux journalctl/system log flooding and comply with GNOME Extensions review guidelines.
+- **EGO-L-002 (Object Lifecycle)**: Explicitly destroyed `this.label` alongside `this.button` during extension `disable()` to guarantee clean deallocation.
+- **EGO-L-003 (Signal Management)**: Properly tracked and disconnected the `open-state-changed` submenu signal on `appsSubmenu.menu` during device disconnection and extension `disable()`, eliminating potential memory leaks and dangling closures.
+
+---
+
 ## [2.0.0] - 2026-10-29
 
 ### Added

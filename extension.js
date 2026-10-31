@@ -113,12 +113,8 @@ export default class MyMenuExtension extends Extension {
                 GLib.source_remove(this._pollTimeoutId);
                 this._pollTimeoutId = null;
             }
-            for (const [serial, devData] of this._deviceButtons) {
-                try {
-                    devData.button.destroy();
-                } catch (e) {
-                    // Ignore
-                }
+            for (const [, devData] of this._deviceButtons) {
+                this._cleanupDevice(devData);
             }
             this._deviceButtons.clear();
         } else {
@@ -137,7 +133,7 @@ export default class MyMenuExtension extends Extension {
             const raw = this._settings.get_string('menu-items');
             items = JSON.parse(raw) || [];
         } catch (e) {
-            console.error(`My Menu: Error parsing menu-items: ${e}`);
+            this._logError('menu-items', e);
         }
 
         for (const item of items) {
@@ -180,7 +176,7 @@ export default class MyMenuExtension extends Extension {
                         this.runCommand([target]);
                     }
                 } catch (e) {
-                    console.error(`My Menu: Parse command error: ${e}`);
+                    this._logError('parse-command', e);
                     this.runCommand([target]);
                 }
                 break;
@@ -205,7 +201,7 @@ export default class MyMenuExtension extends Extension {
                 break;
             }
             default:
-                console.warn(`My Menu: Unknown action type: ${item.type}`);
+                this._logError('action-type', `Unknown action type: ${item.type}`);
         }
     }
 
@@ -216,7 +212,7 @@ export default class MyMenuExtension extends Extension {
                 return;
             }
         } catch (e) {
-            console.error(`My Menu: this.openPreferences() failed: ${e}`);
+            this._logError('open-preferences', e);
         }
 
         try {
@@ -225,7 +221,7 @@ export default class MyMenuExtension extends Extension {
                 Gio.SubprocessFlags.NONE
             );
         } catch (e) {
-            console.error(`My Menu: Failed to spawn gnome-extensions prefs: ${e}`);
+            this._logError('spawn-preferences', e);
             this.notify('Could not open extension preferences.');
         }
     }
@@ -333,7 +329,7 @@ export default class MyMenuExtension extends Extension {
         try {
             Gio.AppInfo.launch_default_for_uri(url, null);
         } catch (e) {
-            console.error(`Quick Menu: URL error: ${e}`);
+            this._logError('open-url', e);
             this.notify('Could not open URL.');
         }
     }
@@ -343,7 +339,7 @@ export default class MyMenuExtension extends Extension {
             const file = Gio.File.new_for_path(path);
             Gio.AppInfo.launch_default_for_uri(file.get_uri(), null);
         } catch (e) {
-            console.error(`Quick Menu: Could not open ${path}: ${e}`);
+            this._logError('open-path', `${path}: ${e}`);
             this.notify(`Could not open: ${path}`);
         }
     }
@@ -352,7 +348,7 @@ export default class MyMenuExtension extends Extension {
         try {
             Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
         } catch (e) {
-            console.error(`Quick Menu: Command failed: ${e}`);
+            this._logError('run-command', e);
             this.notify(`Could not run ${argv[0]}.`);
         }
     }
@@ -371,7 +367,6 @@ export default class MyMenuExtension extends Extension {
     _startDeviceMonitor() {
         const adb = this.findExecutable('adb', '/usr/local/bin/adb');
         if (!adb) {
-            console.log('Quick Menu: adb binary not installed. Android device monitor is disabled.');
             return;
         }
 
@@ -475,11 +470,7 @@ export default class MyMenuExtension extends Extension {
         let removed = false;
         for (const [serial, devData] of this._deviceButtons) {
             if (!currentDevices.has(serial)) {
-                try {
-                    devData.button.destroy();
-                } catch (e) {
-                    // Ignore
-                }
+                this._cleanupDevice(devData);
                 this._deviceButtons.delete(serial);
                 removed = true;
             }
@@ -589,12 +580,13 @@ export default class MyMenuExtension extends Extension {
             device,
             button,
             appsSubmenu,
+            appsSubmenuSignalId: null,
             appsLoaded: false,
             apps: null,
         };
 
         // Load apps when submenu is expanded
-        appsSubmenu.menu.connect('open-state-changed', (_m, isOpen) => {
+        devData.appsSubmenuSignalId = appsSubmenu.menu.connect('open-state-changed', (_m, isOpen) => {
             if (isOpen && !devData.appsLoaded) {
                 this.loadDeviceApps(devData);
             }
@@ -634,16 +626,15 @@ export default class MyMenuExtension extends Extension {
                         argv.push(...parsed);
                     }
                 } catch (e) {
-                    console.error(`Quick Menu: Error parsing scrcpy-extra-args: ${e}`);
+                    this._logError('scrcpy-extra-args', e);
                 }
             }
         }
 
         try {
             Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
-            console.log(`Quick Menu: Started scrcpy for ${serial} (mirrorless: ${mirrorless})`);
         } catch (e) {
-            console.error(`Quick Menu: scrcpy launch failed: ${e}`);
+            this._logError('scrcpy-launch', e);
             this.notify('Could not start scrcpy.');
         }
     }
@@ -687,7 +678,7 @@ export default class MyMenuExtension extends Extension {
                         argv.push(...parsed);
                     }
                 } catch (e) {
-                    console.error(`Quick Menu: Error parsing scrcpy-extra-args: ${e}`);
+                    this._logError('scrcpy-extra-args', e);
                 }
             }
         } else {
@@ -702,9 +693,8 @@ export default class MyMenuExtension extends Extension {
 
         try {
             Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE);
-            console.log(`Quick Menu: Started app ${pkg} for ${serial} on separate window`);
         } catch (e) {
-            console.error(`Quick Menu: Failed to launch app ${pkg}: ${e}`);
+            this._logError('app-launch', `${pkg}: ${e}`);
             this.notify(`Could not start ${appName}.`);
         }
     }
@@ -723,7 +713,7 @@ export default class MyMenuExtension extends Extension {
                 Gio.SubprocessFlags.NONE
             );
         } catch (e) {
-            console.error(`Quick Menu: Failed to open ADB shell: ${e}`);
+            this._logError('adb-shell', e);
             this.notify('Could not open terminal emulator.');
         }
     }
@@ -742,7 +732,7 @@ export default class MyMenuExtension extends Extension {
                 Gio.SubprocessFlags.NONE
             );
         } catch (e) {
-            console.error(`Quick Menu: Failed to open storage shell: ${e}`);
+            this._logError('storage-shell', e);
             this.notify('Could not open terminal emulator.');
         }
     }
@@ -770,11 +760,11 @@ export default class MyMenuExtension extends Extension {
                         this.openPath(filename);
                     }
                 } catch (e) {
-                    console.error(`Quick Menu: Screenshot wait error: ${e}`);
+                    this._logError('screenshot-wait', e);
                 }
             });
         } catch (e) {
-            console.error(`Quick Menu: Screenshot failed: ${e}`);
+            this._logError('screenshot', e);
             this.notify('Could not capture screenshot.');
         }
     }
@@ -789,7 +779,7 @@ export default class MyMenuExtension extends Extension {
             Gio.Subprocess.new([adb, '-s', serial, 'reboot'], Gio.SubprocessFlags.NONE);
             this.notify('Device reboot signal sent.');
         } catch (e) {
-            console.error(`Quick Menu: Reboot failed: ${e}`);
+            this._logError('reboot', e);
             this.notify('Could not reboot device.');
         }
     }
@@ -814,7 +804,7 @@ export default class MyMenuExtension extends Extension {
                 Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
             );
         } catch (e) {
-            console.error(`My Menu: Could not list apps with scrcpy: ${e}`);
+            this._logError('scrcpy-list-apps', e);
             this._fallbackLoadAppsWithAdb(devData);
             return;
         }
@@ -968,7 +958,34 @@ export default class MyMenuExtension extends Extension {
         }
     }
 
-    // ---------------- CLEANUP ----------------
+    // ---------------- CLEANUP & HELPERS ----------------
+
+    _cleanupDevice(devData) {
+        if (!devData)
+            return;
+
+        if (devData.appsSubmenuSignalId && devData.appsSubmenu?.menu) {
+            try {
+                devData.appsSubmenu.menu.disconnect(devData.appsSubmenuSignalId);
+            } catch (e) {
+                // Ignore
+            }
+            devData.appsSubmenuSignalId = null;
+        }
+
+        if (devData.button) {
+            try {
+                devData.button.destroy();
+            } catch (e) {
+                // Ignore
+            }
+            devData.button = null;
+        }
+    }
+
+    _logError(context, error) {
+        console.error(`Quick Menu [${context}]: ${error}`);
+    }
 
     disable() {
         this._enabled = false;
@@ -988,19 +1005,21 @@ export default class MyMenuExtension extends Extension {
             this._pollTimeoutId = null;
         }
 
-        // Remove all device buttons from panel
-        for (const [serial, devData] of this._deviceButtons) {
-            try {
-                devData.button.destroy();
-            } catch (e) {
-                // Ignore
-            }
+        // Clean up and remove all device buttons from panel
+        for (const [, devData] of this._deviceButtons) {
+            this._cleanupDevice(devData);
         }
         this._deviceButtons.clear();
 
-        // Destroy Options button
-        this.button?.destroy();
-        this.button = null;
-        this.label = null;
+        // Destroy Options label and button
+        if (this.label) {
+            this.label.destroy();
+            this.label = null;
+        }
+
+        if (this.button) {
+            this.button.destroy();
+            this.button = null;
+        }
     }
 }
