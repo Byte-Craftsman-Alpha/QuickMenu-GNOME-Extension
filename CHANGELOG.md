@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.0] - 2026-11-01
+
+### Refactored
+- Cleaned up codebase architecture and standardized class identifiers (`QuickMenuExtension`, `QuickMenuPreferences`).
+- Removed redundant boilerplate comments and verbose section banners to adhere to GNOME coding standards.
+- Streamlined error reporting and lifecycle disposal for optimal maintainability.
+
+---
+
 ## [3.0.0] - 2026-10-31
 
 ### Fixed

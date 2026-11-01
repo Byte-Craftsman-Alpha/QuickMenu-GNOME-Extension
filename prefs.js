@@ -3,7 +3,6 @@ import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import GObject from 'gi://GObject';
 
 import { ExtensionPreferences, gettext as _ } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
@@ -20,7 +19,7 @@ function saveMenuItems(settings, items) {
     settings.set_string('menu-items', JSON.stringify(items));
 }
 
-export default class MyMenuPreferences extends ExtensionPreferences {
+export default class QuickMenuPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const schemaId = this.metadata?.['settings-schema'] || 'org.gnome.shell.extensions.quick-menu';
         const settings = this.getSettings(schemaId);
@@ -28,13 +27,11 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         window.default_width = 650;
         window.default_height = 700;
 
-        // ================= PAGE 1: MENU & POSITION =================
         const page1 = new Adw.PreferencesPage({
             title: _('Menu and Shortcuts'),
             icon_name: 'view-list-bullet-symbolic',
         });
 
-        // --- Panel Settings Group ---
         const panelGroup = new Adw.PreferencesGroup({
             title: _('Panel Placement'),
             description: _('Configure where and how the menu appears on the top panel.'),
@@ -93,7 +90,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
 
         page1.add(panelGroup);
 
-        // --- Menu Items Group ---
         const itemsGroup = new Adw.PreferencesGroup({
             title: _('Menu Shortcuts'),
             description: _('Custom links, folders, and applications in your menu dropdown.'),
@@ -114,13 +110,11 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         page1.add(itemsGroup);
         window.add(page1);
 
-        // ================= PAGE 2: ANDROID & SCRCPY =================
         const page2 = new Adw.PreferencesPage({
             title: _('Android and Scrcpy'),
             icon_name: 'phone-symbolic',
         });
 
-        // --- System Prerequisites Check ---
         const depCheckGroup = new Adw.PreferencesGroup({
             title: _('System Prerequisites'),
         });
@@ -180,7 +174,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
             description: _('Optimizations for opening multiple app windows simultaneously without screen freezing.'),
         });
 
-        // Resolution
         const resModel = new Gtk.StringList();
         resModel.append(_('1024 px (Fast / Low Bandwidth)'));
         resModel.append(_('1280 px (Recommended / Balanced)'));
@@ -202,7 +195,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         });
         scrcpyGroup.add(resCombo);
 
-        // Bitrate
         const bitModel = new Gtk.StringList();
         bitModel.append(_('2 Mbps (Low Latency / Smooth)'));
         bitModel.append(_('4 Mbps (Recommended)'));
@@ -224,7 +216,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         });
         scrcpyGroup.add(bitCombo);
 
-        // Stay Awake
         const awakeSwitch = new Adw.SwitchRow({
             title: _('Keep Device Awake'),
             subtitle: _('Prevents Android from putting virtual displays and video encoders to sleep during mirroring.'),
@@ -233,7 +224,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         settings.bind('scrcpy-stay-awake', awakeSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
         scrcpyGroup.add(awakeSwitch);
 
-        // No Audio
         const audioSwitch = new Adw.SwitchRow({
             title: _('Mute Audio in App Windows'),
             subtitle: _('Prevents Android AudioPlaybackCapture deadlocks when running multiple app windows at once.'),
@@ -242,7 +232,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         settings.bind('scrcpy-no-audio', audioSwitch, 'active', Gio.SettingsBindFlags.DEFAULT);
         scrcpyGroup.add(audioSwitch);
 
-        // Extra Args
         const extraArgsRow = new Adw.EntryRow({
             title: _('Extra scrcpy CLI Arguments'),
             text: settings.get_string('scrcpy-extra-args'),
@@ -255,7 +244,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         page2.add(scrcpyGroup);
         window.add(page2);
 
-        // ================= PAGE 3: ABOUT =================
         const page3 = new Adw.PreferencesPage({
             title: _('About'),
             icon_name: 'help-about-symbolic',
@@ -266,9 +254,10 @@ export default class MyMenuPreferences extends ExtensionPreferences {
             description: _('Customizable top panel menu for system shortcuts and multi-window Android device control via scrcpy.'),
         });
 
+        const versionStr = this.metadata?.version ? `v${this.metadata.version}` : 'v4.0.0';
         const verRow = new Adw.ActionRow({
             title: _('Version'),
-            subtitle: '2.0.0 (Open Source Edition)',
+            subtitle: `${versionStr} (Open Source Edition)`,
         });
         aboutGroup.add(verRow);
 
@@ -295,12 +284,9 @@ export default class MyMenuPreferences extends ExtensionPreferences {
     }
 
     _refreshItemsList(group, settings, parentWindow) {
-        // Clear existing rows in items group
-        // We recreate rows on each update
         if (group._itemRows) {
-            for (const r of group._itemRows) {
+            for (const r of group._itemRows)
                 group.remove(r);
-            }
         }
         group._itemRows = [];
 
@@ -322,14 +308,12 @@ export default class MyMenuPreferences extends ExtensionPreferences {
                 subtitle: `${(item.type || 'command').toUpperCase()}: ${item.target}`,
             });
 
-            // Prefix Icon
             const icon = new Gtk.Image({
                 icon_name: item.icon || 'application-x-executable-symbolic',
                 pixel_size: 24,
             });
             row.add_prefix(icon);
 
-            // Enabled Switch
             const enabledSwitch = new Gtk.Switch({
                 active: item.enabled !== false,
                 valign: Gtk.Align.CENTER,
@@ -340,7 +324,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
             });
             row.add_suffix(enabledSwitch);
 
-            // Move Up Button
             if (index > 0) {
                 const upBtn = new Gtk.Button({
                     icon_name: 'go-up-symbolic',
@@ -358,7 +341,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
                 row.add_suffix(upBtn);
             }
 
-            // Move Down Button
             if (index < items.length - 1) {
                 const downBtn = new Gtk.Button({
                     icon_name: 'go-down-symbolic',
@@ -376,7 +358,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
                 row.add_suffix(downBtn);
             }
 
-            // Edit Button
             const editBtn = new Gtk.Button({
                 icon_name: 'document-edit-symbolic',
                 has_frame: false,
@@ -390,7 +371,6 @@ export default class MyMenuPreferences extends ExtensionPreferences {
             });
             row.add_suffix(editBtn);
 
-            // Delete Button
             const delBtn = new Gtk.Button({
                 icon_name: 'user-trash-symbolic',
                 has_frame: false,
@@ -449,21 +429,18 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         const page = new Adw.PreferencesPage();
         const group = new Adw.PreferencesGroup();
 
-        // 1. Label Name
         const nameRow = new Adw.EntryRow({
             title: _('Shortcut Name'),
             text: currentItem.name || '',
         });
         group.add(nameRow);
 
-        // 2. Icon Name
         const iconRow = new Adw.EntryRow({
             title: _('Icon Name (Symbolic)'),
             text: currentItem.icon || 'application-x-executable-symbolic',
         });
         group.add(iconRow);
 
-        // 3. Action Type
         const typeModel = new Gtk.StringList();
         typeModel.append(_('Terminal Command / Executable'));
         typeModel.append(_('Web URL'));
@@ -478,14 +455,12 @@ export default class MyMenuPreferences extends ExtensionPreferences {
         });
         group.add(typeCombo);
 
-        // 4. Target Input
         const targetRow = new Adw.EntryRow({
             title: _('Target (Command, URL, or Path)'),
             text: currentItem.target || '',
         });
         group.add(targetRow);
 
-        // Help text row
         const helpRow = new Adw.ActionRow({
             title: _('Examples'),
             subtitle: _('Command: x-terminal-emulator or btop\nURL: https://google.com\nPath: /home/user/Projects\nSpecial: DOWNLOAD, DOCUMENTS, PICTURES'),
@@ -498,9 +473,8 @@ export default class MyMenuPreferences extends ExtensionPreferences {
             const iconName = iconRow.text.trim() || 'application-x-executable-symbolic';
             const selectedType = typeMap[typeCombo.selected] || 'command';
 
-            if (!name || !target) {
+            if (!name || !target)
                 return;
-            }
 
             const items = getMenuItems(settings);
 
@@ -525,7 +499,8 @@ export default class MyMenuPreferences extends ExtensionPreferences {
 
             saveMenuItems(settings, items);
             dialog.close();
-            if (onSaved) onSaved();
+            if (onSaved)
+                onSaved();
         });
 
         page.add(group);

@@ -9,42 +9,35 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-export default class MyMenuExtension extends Extension {
+export default class QuickMenuExtension extends Extension {
     enable() {
         this._enabled = true;
-        this._deviceButtons = new Map(); // serial -> { button, device, appsSubmenu, appsLoaded, apps }
+        this._deviceButtons = new Map();
         this._pollTimeoutId = null;
         this._pollingActive = false;
 
-        // Initialize Settings
         const schemaId = this.metadata?.['settings-schema'] || 'org.gnome.shell.extensions.quick-menu';
         this._settings = this.getSettings(schemaId);
-        this._settingsSignals = [];
-
-        this._settingsSignals.push(
+        this._settingsSignals = [
             this._settings.connect('changed::menu-title', () => this._onMenuTitleChanged()),
             this._settings.connect('changed::menu-items', () => this._buildMenuItems()),
             this._settings.connect('changed::panel-box', () => this._relocatePanelButton()),
             this._settings.connect('changed::panel-position', () => this._relocatePanelButton()),
             this._settings.connect('changed::stick-to-zorin-menu', () => this._ensurePositions()),
-            this._settings.connect('changed::enable-adb', () => this._onEnableAdbChanged())
-        );
+            this._settings.connect('changed::enable-adb', () => this._onEnableAdbChanged()),
+        ];
 
         const initialTitle = this._settings.get_string('menu-title') || 'Options';
         const initialBox = this._settings.get_string('panel-box') || 'left';
         const initialPos = this._settings.get_int('panel-position');
 
-        // ---------------- Options Panel Menu ----------------
         this.button = new PanelMenu.Button(0.0, initialTitle);
-
         this.label = new St.Label({
             text: initialTitle,
             y_align: Clutter.ActorAlign.CENTER,
         });
-
         this.button.add_child(this.label);
 
-        // Build dynamic menu items from GSettings
         this._buildMenuItems();
 
         Main.panel.addToStatusArea(
@@ -56,13 +49,9 @@ export default class MyMenuExtension extends Extension {
 
         this._ensurePositions();
 
-        // ---------------- Start ADB Device Monitor ----------------
-        if (this._settings.get_boolean('enable-adb')) {
+        if (this._settings.get_boolean('enable-adb'))
             this._startDeviceMonitor();
-        }
     }
-
-    // ---------------- SETTINGS HANDLERS ----------------
 
     _onMenuTitleChanged() {
         if (this.label && this._settings) {
@@ -80,21 +69,18 @@ export default class MyMenuExtension extends Extension {
 
         if (this.button.container) {
             const parent = this.button.container.get_parent();
-            if (parent) {
+            if (parent)
                 parent.remove_child(this.button.container);
-            }
         }
         delete Main.panel.statusArea['quick-menu-indicator'];
 
         Main.panel.addToStatusArea('quick-menu-indicator', this.button, position, box);
 
-        // Also relocate ADB device buttons to the same box if any
         for (const [serial, devData] of this._deviceButtons) {
             if (devData.button?.container) {
                 const parent = devData.button.container.get_parent();
-                if (parent) {
+                if (parent)
                     parent.remove_child(devData.button.container);
-                }
                 delete Main.panel.statusArea[`adb-device-${serial}`];
                 Main.panel.addToStatusArea(`adb-device-${serial}`, devData.button, position + 1, box);
             }
@@ -113,9 +99,8 @@ export default class MyMenuExtension extends Extension {
                 GLib.source_remove(this._pollTimeoutId);
                 this._pollTimeoutId = null;
             }
-            for (const [, devData] of this._deviceButtons) {
+            for (const [, devData] of this._deviceButtons)
                 this._cleanupDevice(devData);
-            }
             this._deviceButtons.clear();
         } else {
             this._startDeviceMonitor();
@@ -151,7 +136,6 @@ export default class MyMenuExtension extends Extension {
             );
         }
 
-        // Settings / Preferences action at bottom
         this.button.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this.addMenuItemWithIcon(
             this.button.menu,
@@ -170,11 +154,10 @@ export default class MyMenuExtension extends Extension {
             case 'command': {
                 try {
                     const [success, argv] = GLib.shell_parse_argv(target);
-                    if (success && argv && argv.length > 0) {
+                    if (success && argv && argv.length > 0)
                         this.runCommand(argv);
-                    } else {
+                    else
                         this.runCommand([target]);
-                    }
                 } catch (e) {
                     this._logError('parse-command', e);
                     this.runCommand([target]);
@@ -193,11 +176,10 @@ export default class MyMenuExtension extends Extension {
                     ? GLib.UserDirectory[dirKey]
                     : GLib.UserDirectory.DIRECTORY_DOWNLOAD;
                 const path = GLib.get_user_special_dir(dirType);
-                if (path) {
+                if (path)
                     this.openPath(path);
-                } else {
+                else
                     this.notify(`${item.name || 'Directory'} not found.`);
-                }
                 break;
             }
             default:
@@ -226,8 +208,6 @@ export default class MyMenuExtension extends Extension {
         }
     }
 
-    // ---------------- UI ITEM BUILDERS ----------------
-
     addMenuItemWithIcon(menu, text, iconName, callback, params = {}) {
         const item = new PopupMenu.PopupImageMenuItem(text, iconName, params);
         if (item.label?.clutter_text) {
@@ -235,9 +215,8 @@ export default class MyMenuExtension extends Extension {
             item.label.clutter_text.line_wrap = false;
         }
 
-        if (callback) {
+        if (callback)
             item.connect('activate', callback);
-        }
 
         menu.addMenuItem(item);
         return item;
@@ -245,9 +224,9 @@ export default class MyMenuExtension extends Extension {
 
     addSubMenuWithIcon(menu, text, iconName) {
         const item = new PopupMenu.PopupSubMenuMenuItem(text, true);
-        if (item.icon && iconName) {
+        if (item.icon && iconName)
             item.icon.icon_name = iconName;
-        }
+
         if (item.label?.clutter_text) {
             item.label.clutter_text.ellipsize = Pango.EllipsizeMode.END;
             item.label.clutter_text.line_wrap = false;
@@ -258,11 +237,7 @@ export default class MyMenuExtension extends Extension {
     }
 
     _ensurePositions() {
-        if (!this._enabled || !this.button?.container)
-            return;
-
-        // Never modify panel layout while any menu is open (prevents menu disappearing/closing)
-        if (this.button?.menu?.isOpen)
+        if (!this._enabled || !this.button?.container || this.button?.menu?.isOpen)
             return;
 
         for (const [, devData] of this._deviceButtons) {
@@ -283,38 +258,33 @@ export default class MyMenuExtension extends Extension {
         const stick = this._settings ? this._settings.get_boolean('stick-to-zorin-menu') : true;
 
         if (stick && boxName === 'left') {
-            // 1. Locate the Zorin Menu container (first element in the panel)
-            let zorinContainer = Main.panel.statusArea['zorin-menu']?.container;
-            if (!zorinContainer) {
+            let startContainer = Main.panel.statusArea['zorin-menu']?.container;
+            if (!startContainer) {
                 const children = box.get_children();
-                if (children.length > 0 && children[0] !== this.button.container) {
-                    zorinContainer = children[0];
-                }
+                if (children.length > 0 && children[0] !== this.button.container)
+                    startContainer = children[0];
             }
 
-            // 2. Lock Options immediately after the Zorin Menu icon only if not already there
-            if (zorinContainer && box.contains(zorinContainer)) {
+            if (startContainer && box.contains(startContainer)) {
                 const children = box.get_children();
-                const zorinIdx = children.indexOf(zorinContainer);
+                const startIdx = children.indexOf(startContainer);
                 const optionsIdx = children.indexOf(this.button.container);
 
-                if (optionsIdx !== zorinIdx + 1) {
-                    box.set_child_above_sibling(this.button.container, zorinContainer);
-                }
+                if (optionsIdx !== startIdx + 1)
+                    box.set_child_above_sibling(this.button.container, startContainer);
             }
         }
 
-        // 3. Keep all ADB device buttons in sequence immediately after Options
         let lastIndicator = this.button.container;
-        for (const [serial, devData] of this._deviceButtons) {
+        for (const [, devData] of this._deviceButtons) {
             if (devData.button?.container && box.contains(devData.button.container)) {
                 const currentChildren = box.get_children();
                 const lastIdx = currentChildren.indexOf(lastIndicator);
                 const devIdx = currentChildren.indexOf(devData.button.container);
 
-                if (devIdx !== lastIdx + 1) {
+                if (devIdx !== lastIdx + 1)
                     box.set_child_above_sibling(devData.button.container, lastIndicator);
-                }
+
                 lastIndicator = devData.button.container;
             }
         }
@@ -362,13 +332,10 @@ export default class MyMenuExtension extends Extension {
         return null;
     }
 
-    // ---------------- ADB DEVICE MONITORING ----------------
-
     _startDeviceMonitor() {
         const adb = this.findExecutable('adb', '/usr/local/bin/adb');
-        if (!adb) {
+        if (!adb)
             return;
-        }
 
         if (this._pollTimeoutId) {
             GLib.source_remove(this._pollTimeoutId);
@@ -459,14 +426,11 @@ export default class MyMenuExtension extends Extension {
             currentDevices.set(serial, { serial, model, state });
         }
 
-        // Add buttons for newly connected devices
         for (const [serial, devInfo] of currentDevices) {
-            if (!this._deviceButtons.has(serial)) {
+            if (!this._deviceButtons.has(serial))
                 this._createDeviceButton(devInfo);
-            }
         }
 
-        // Remove buttons for disconnected devices
         let removed = false;
         for (const [serial, devData] of this._deviceButtons) {
             if (!currentDevices.has(serial)) {
@@ -476,23 +440,18 @@ export default class MyMenuExtension extends Extension {
             }
         }
 
-        if (removed) {
+        if (removed)
             this._ensurePositions();
-        }
     }
-
-    // ---------------- DEDICATED DEVICE PANEL BUTTON ----------------
 
     _createDeviceButton(device) {
         const button = new PanelMenu.Button(0.0, device.model);
-
         const label = new St.Label({
             text: device.model,
             y_align: Clutter.ActorAlign.CENTER,
         });
         button.add_child(label);
 
-        // 1. Header info
         this.addMenuItemWithIcon(
             button.menu,
             device.model,
@@ -503,7 +462,6 @@ export default class MyMenuExtension extends Extension {
 
         button.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        // 2. Scrcpy Mirror Screen
         this.addMenuItemWithIcon(
             button.menu,
             'Mirror',
@@ -511,7 +469,6 @@ export default class MyMenuExtension extends Extension {
             () => this.launchScrcpy(device.serial, false)
         );
 
-        // 3. Scrcpy Mirrorless Screen
         this.addMenuItemWithIcon(
             button.menu,
             'Mirrorless',
@@ -521,7 +478,6 @@ export default class MyMenuExtension extends Extension {
 
         button.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        // 4. ADB Shell in Terminal
         this.addMenuItemWithIcon(
             button.menu,
             'Shell',
@@ -529,7 +485,6 @@ export default class MyMenuExtension extends Extension {
             () => this.openAdbShell(device.serial, device.model)
         );
 
-        // 5. Device Storage Submenu
         const storageSubmenu = this.addSubMenuWithIcon(
             button.menu,
             'Storage',
@@ -552,14 +507,12 @@ export default class MyMenuExtension extends Extension {
 
         button.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        // 6. Installed Packages / Apps Submenu
         const appsSubmenu = this.addSubMenuWithIcon(
             button.menu,
             'Apps',
             'view-app-grid-symbolic'
         );
 
-        // 7. Quick Utilities
         button.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
         this.addMenuItemWithIcon(
@@ -585,25 +538,19 @@ export default class MyMenuExtension extends Extension {
             apps: null,
         };
 
-        // Load apps when submenu is expanded
         devData.appsSubmenuSignalId = appsSubmenu.menu.connect('open-state-changed', (_m, isOpen) => {
-            if (isOpen && !devData.appsLoaded) {
+            if (isOpen && !devData.appsLoaded)
                 this.loadDeviceApps(devData);
-            }
         });
 
-        // Add to panel in matching panel box
         const boxName = this._settings ? this._settings.get_string('panel-box') : 'left';
         const position = this._settings ? this._settings.get_int('panel-position') + 1 : 2;
         Main.panel.addToStatusArea(`adb-device-${device.serial}`, button, position, boxName);
         this._deviceButtons.set(device.serial, devData);
         this._ensurePositions();
 
-        // Preload apps in background so clicking Installed Apps is fast
         this.loadDeviceApps(devData);
     }
-
-    // ---------------- SCRCPY & APP LAUNCHING ----------------
 
     launchScrcpy(serial, mirrorless = false) {
         const scrcpy = this.findExecutable('scrcpy', '/usr/local/bin/scrcpy');
@@ -613,7 +560,6 @@ export default class MyMenuExtension extends Extension {
         }
 
         const argv = [scrcpy, '--serial', serial];
-
         if (mirrorless)
             argv.push('-S');
 
@@ -622,9 +568,8 @@ export default class MyMenuExtension extends Extension {
             if (extraArgs) {
                 try {
                     const [ok, parsed] = GLib.shell_parse_argv(extraArgs);
-                    if (ok && parsed) {
+                    if (ok && parsed)
                         argv.push(...parsed);
-                    }
                 } catch (e) {
                     this._logError('scrcpy-extra-args', e);
                 }
@@ -653,30 +598,25 @@ export default class MyMenuExtension extends Extension {
         ];
 
         if (this._settings) {
-            if (this._settings.get_boolean('scrcpy-no-audio')) {
+            if (this._settings.get_boolean('scrcpy-no-audio'))
                 argv.push('--no-audio');
-            }
-            if (this._settings.get_boolean('scrcpy-stay-awake')) {
+            if (this._settings.get_boolean('scrcpy-stay-awake'))
                 argv.push('--stay-awake');
-            }
 
             const maxSize = this._settings.get_int('scrcpy-max-size');
-            if (maxSize > 0) {
+            if (maxSize > 0)
                 argv.push(`--max-size=${maxSize}`);
-            }
 
             const bitrate = this._settings.get_string('scrcpy-bitrate');
-            if (bitrate) {
+            if (bitrate)
                 argv.push(`--video-bit-rate=${bitrate}`);
-            }
 
             const extraArgs = this._settings.get_string('scrcpy-extra-args')?.trim();
             if (extraArgs) {
                 try {
                     const [ok, parsed] = GLib.shell_parse_argv(extraArgs);
-                    if (ok && parsed) {
+                    if (ok && parsed)
                         argv.push(...parsed);
-                    }
                 } catch (e) {
                     this._logError('scrcpy-extra-args', e);
                 }
@@ -699,7 +639,7 @@ export default class MyMenuExtension extends Extension {
         }
     }
 
-    openAdbShell(serial, model) {
+    openAdbShell(serial) {
         const terminal = this.findExecutable('x-terminal-emulator', 'gnome-terminal');
         const adb = this.findExecutable('adb', '/usr/local/bin/adb');
         if (!adb) {
@@ -718,7 +658,7 @@ export default class MyMenuExtension extends Extension {
         }
     }
 
-    openStorageShell(serial, model) {
+    openStorageShell(serial) {
         const terminal = this.findExecutable('x-terminal-emulator', 'gnome-terminal');
         const adb = this.findExecutable('adb', '/usr/local/bin/adb');
         if (!adb) {
@@ -784,8 +724,6 @@ export default class MyMenuExtension extends Extension {
         }
     }
 
-    // ---------------- APP PACKAGE DISCOVERY ----------------
-
     loadDeviceApps(devData) {
         const { device, appsSubmenu } = devData;
         const menu = appsSubmenu.menu;
@@ -823,7 +761,6 @@ export default class MyMenuExtension extends Extension {
             }
 
             const { userApps, systemApps } = this.parseScrcpyApps(stdout);
-
             if (userApps.length === 0 && systemApps.length === 0) {
                 this._fallbackLoadAppsWithAdb(devData);
                 return;
@@ -912,7 +849,6 @@ export default class MyMenuExtension extends Extension {
         const menu = appsSubmenu.menu;
         menu.removeAll();
 
-        // Refresh action with symbolic icon
         this.addMenuItemWithIcon(
             menu,
             'Refresh Apps',
@@ -932,7 +868,6 @@ export default class MyMenuExtension extends Extension {
             return;
         }
 
-        // User installed apps
         if (apps.userApps.length > 0) {
             for (const app of apps.userApps) {
                 this.addMenuItemWithIcon(
@@ -944,7 +879,6 @@ export default class MyMenuExtension extends Extension {
             }
         }
 
-        // System apps
         if (apps.systemApps.length > 0) {
             menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem('System Apps'));
             for (const app of apps.systemApps) {
@@ -957,8 +891,6 @@ export default class MyMenuExtension extends Extension {
             }
         }
     }
-
-    // ---------------- CLEANUP & HELPERS ----------------
 
     _cleanupDevice(devData) {
         if (!devData)
@@ -990,28 +922,22 @@ export default class MyMenuExtension extends Extension {
     disable() {
         this._enabled = false;
 
-        // Disconnect settings signals
         if (this._settings && this._settingsSignals) {
-            for (const sigId of this._settingsSignals) {
+            for (const sigId of this._settingsSignals)
                 this._settings.disconnect(sigId);
-            }
             this._settingsSignals = [];
         }
         this._settings = null;
 
-        // Stop polling
         if (this._pollTimeoutId) {
             GLib.source_remove(this._pollTimeoutId);
             this._pollTimeoutId = null;
         }
 
-        // Clean up and remove all device buttons from panel
-        for (const [, devData] of this._deviceButtons) {
+        for (const [, devData] of this._deviceButtons)
             this._cleanupDevice(devData);
-        }
         this._deviceButtons.clear();
 
-        // Destroy Options label and button
         if (this.label) {
             this.label.destroy();
             this.label = null;
